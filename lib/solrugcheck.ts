@@ -2,6 +2,8 @@
 // Cham diem thich nghi: token thanh khoan sau / trusted thi khoan dung (mature),
 // token moi / mong thi nghiem ngat (new). Giong mature mode ben EVM.
 // Nguon: https://api.gopluslabs.io/api/v1/solana/token_security?contract_addresses=<MINT>
+import { cached } from "@/lib/cache";
+import { fetchMarket, Market } from "@/lib/market";
 
 const UA = "sol-rugcheck/1.0";
 const MATURE_LIQ = 1000000; // >= $1M thanh khoan => established
@@ -15,6 +17,7 @@ export type SolRugResult = {
   tokenInfo: { name?: string | null; symbol?: string | null; totalSupply?: string | null };
   mode: "new" | "mature";
   basis: string;
+  market: Market;
   verdict: "GO" | "CAUTION" | "DANGER";
   reasons: string[];
   checks: Check[];
@@ -57,20 +60,24 @@ export async function solRugCheck(mint: string, modeOverride?: string): Promise<
   const explorer = "https://solscan.io/token/" + token;
   const base: SolRugResult = {
     type: "sol-rugcheck", chain: "solana", token, tokenInfo: {},
-    mode: "new", basis: "", verdict: "CAUTION", reasons: [], checks: [],
+    mode: "new", basis: "", market: { found: false }, verdict: "CAUTION", reasons: [], checks: [],
     notChecked: NOT_CHECKED, explorer, disclaimer: DISCLAIMER,
   };
 
   const url = "https://api.gopluslabs.io/api/v1/solana/token_security?contract_addresses=" + token;
-  let rec: any = null;
-  try {
-    const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
-    if (res.ok) {
+  const [recR, marketR] = await Promise.allSettled([
+    cached("goplussol:" + token, 60000, async () => {
+      const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
+      if (!res.ok) return null;
       const data: any = await res.json();
       const result = data?.result || {};
-      rec = result[token] || result[Object.keys(result)[0]] || null;
-    }
-  } catch { rec = null; }
+      return result[token] || result[Object.keys(result)[0]] || null;
+    }),
+    fetchMarket(token),
+  ]);
+  const rec: any = recR.status === "fulfilled" ? recR.value : null;
+  const market: Market = marketR.status === "fulfilled" ? marketR.value : { found: false };
+  base.market = market;
 
   if (!rec) {
     base.verdict = "CAUTION"; base.basis = "no data";
@@ -87,7 +94,9 @@ export async function solRugCheck(mint: string, modeOverride?: string): Promise<
   };
 
   const dex: any[] = Array.isArray(rec.dex) ? rec.dex : [];
-  const totalLiq = dex.reduce((s, d) => s + (num(d.tvl) ?? num(d.liquidity) ?? 0), 0);
+  const goplusLiq = dex.reduce((s, d) => s + (num(d.tvl) ?? num(d.liquidity) ?? 0), 0);
+  // Uu tien thanh khoan DexScreener (cap nhat hon), fallback GoPlus.
+  const totalLiq = market.found && market.liquidityUsd != null ? market.liquidityUsd : goplusLiq;
   const trusted = b1(rec.trusted_token) === true;
 
   let mode: "new" | "mature";
@@ -165,13 +174,15 @@ export async function solRugCheck(mint: string, modeOverride?: string): Promise<
     else { checks.push({ id: "concentration", status: "ok", detail: "Distribution: top holder ~" + top + "%, top10 ~" + top10 + "% (excl. LP)." }); }
   }
 
-  if (dex.length === 0) {
+  const hasLiq = (market.found && (market.liquidityUsd ?? 0) > 0) || dex.length > 0;
+  if (!hasLiq) {
     weight += 2;
     checks.push({ id: "liquidity", status: "warn", detail: "No DEX liquidity found: token may be untradeable or pre-launch." });
-  } else if (totalLiq > 0) {
-    checks.push({ id: "liquidity", status: "ok", detail: "DEX liquidity present (~$" + Math.round(totalLiq).toLocaleString() + " across " + dex.length + " pool(s)). Scoring mode: " + mode + "." });
   } else {
-    checks.push({ id: "liquidity", status: "info", detail: "Listed on " + dex.length + " DEX pool(s). Scoring mode: " + mode + "." });
+    const liqStr = totalLiq > 0 ? "~$" + Math.round(totalLiq).toLocaleString() : "present";
+    const vol = market.found && market.volume24hUsd != null ? ", 24h vol ~$" + Math.round(market.volume24hUsd).toLocaleString() : "";
+    const age = market.found && market.ageDays != null ? ", age ~" + market.ageDays + "d" : "";
+    checks.push({ id: "liquidity", status: "ok", detail: "Liquidity " + liqStr + vol + age + ". Scoring mode: " + mode + "." });
   }
 
   const creators: any[] = Array.isArray(rec.creators) ? rec.creators : [];

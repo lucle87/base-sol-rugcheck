@@ -13,11 +13,13 @@ export async function GET() {
       title: "sol-rugcheck - Solana token safety for AI agents",
       version: "1.0.0",
       description:
-        "Pre-trade safety check for Solana SPL tokens: freeze/mint authority, transfer hooks/fees, holder concentration and liquidity, returned as a GO/CAUTION/DANGER verdict (GoPlus data). Pay-per-call in USDC via x402 on Solana or Base. No API key, no signup.",
+        "Pre-trade intelligence for Solana SPL tokens: safety (freeze/mint authority, transfer hooks/fees, holder concentration) plus live market data (price, liquidity, 24h volume, age) in one call, returned with a GO/CAUTION/DANGER verdict (GoPlus + DexScreener). Pay-per-call in USDC via x402 on Solana or Base. No API key, no signup.",
       contact: { name: "sol-rugcheck", email: CONTACT_EMAIL, url: BASE_URL },
     },
     servers: [{ url: BASE_URL }],
     "x-docs": { llmsTxt: BASE_URL + "/llms.txt", skill: BASE_URL + "/skill.md" },
+    "x-guidance":
+      "Use sol-rugcheck before buying, swapping, or sniping a Solana SPL token. POST { token } with the mint address. Returns a GO/CAUTION/DANGER safety verdict (freeze/mint authority, transfer controls, holder concentration) plus market data (price, liquidity, volume, age) in one call. Scoring adapts: established/trusted tokens are scored leniently, new/thin tokens strictly. A GO is not a guarantee of safety. Pay per call via x402 (USDC on Solana or Base).",
     x402Version: 2,
     "x-discovery": { ownershipProofs: proofs },
     paths: {
