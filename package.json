@@ -1,0 +1,22 @@
+{
+  "name": "base-sol-rugcheck",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": { "dev": "next dev", "build": "next build", "start": "next start" },
+  "dependencies": {
+    "next": "^16.2.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@x402/next": "latest",
+    "@x402/core": "latest",
+    "@x402/evm": "latest",
+    "@x402/svm": "latest",
+    "@coinbase/x402": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

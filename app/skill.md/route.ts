@@ -1,0 +1,57 @@
+import { BASE_URL, SOL_PAY_TO, EVM_PAY_TO, PRICE_USD, SOL_ENABLED } from "@/lib/x402config";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const L = [
+    "---",
+    "name: sol-rugcheck",
+    "description: >",
+    "  Token safety / rug-check for Solana SPL tokens. Use BEFORE buying, swapping,",
+    "  or sniping an unfamiliar Solana token. Given a mint address, returns a",
+    "  GO / CAUTION / DANGER verdict covering freeze authority, mint authority,",
+    "  Token-2022 transfer controls, holder concentration and DEX liquidity.",
+    "  Pay-per-call in USDC via x402 on Solana or Base. No API key, no signup.",
+    "homepage: " + BASE_URL,
+    "openapi: " + BASE_URL + "/openapi.json",
+    "llms: " + BASE_URL + "/llms.txt",
+    "price: $" + PRICE_USD + " USDC per call",
+    "payment: x402 (USDC on Solana or Base)",
+    "---",
+    "",
+    "# sol-rugcheck",
+    "",
+    "Pre-trade safety check for Solana SPL tokens.",
+    "",
+    "## When to use this",
+    "- \"Is this Solana token safe / a rug / a honeypot?\"",
+    "- Before buying, swapping into, or sniping an unfamiliar SPL token or memecoin.",
+    "- Pre-trade due diligence in a Solana trading workflow.",
+    "",
+    "## When NOT to use this",
+    "- EVM tokens (Ethereum/BNB/Base). This service is Solana (SPL) only.",
+    "- A GO is NOT a guarantee of safety; present it as a risk signal.",
+    "",
+    "## How to call",
+    "`POST " + BASE_URL + "/api/rugcheck`",
+    "Body: { \"token\": \"<solana mint address>\" }",
+    "",
+    "### Payment (x402)",
+    "Unpaid requests return HTTP 402 with x402 terms ($" + PRICE_USD + " USDC).",
+    SOL_ENABLED ? "- Solana: payTo " + SOL_PAY_TO : "- Solana: not configured",
+    "- Base: payTo " + EVM_PAY_TO,
+    "Pay with an x402 client (receipt is the credential), then retry. No API key.",
+    "",
+    "## Response",
+    "verdict GO/CAUTION/DANGER, plus checks: freeze, mint, transfer controls,",
+    "concentration, liquidity. Freeze authority active forces DANGER (issuer can",
+    "freeze your account and block selling).",
+    "",
+    "## Notes for the agent",
+    "- Always relay reasons and the disclaimer; never present GO as \"safe to buy\".",
+    "- One mint per call. Cost $" + PRICE_USD + " per call.",
+    "",
+  ];
+  return new Response(L.join("\n"), { headers: { "content-type": "text/markdown; charset=utf-8" } });
+}
