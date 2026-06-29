@@ -67,7 +67,11 @@ export async function solRugCheck(mint: string, modeOverride?: string): Promise<
   const url = "https://api.gopluslabs.io/api/v1/solana/token_security?contract_addresses=" + token;
   const [recR, marketR] = await Promise.allSettled([
     cached("goplussol:" + token, 60000, async () => {
-      const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
+      const ctrl = new AbortController();
+      const tt = setTimeout(() => ctrl.abort(), 6000);
+      let res: Response;
+      try { res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store", signal: ctrl.signal }); }
+      finally { clearTimeout(tt); }
       if (!res.ok) return null;
       const data: any = await res.json();
       const result = data?.result || {};

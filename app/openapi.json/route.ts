@@ -29,6 +29,15 @@ export async function GET() {
           summary: "Solana SPL token safety check",
           description:
             "Body: { token } where token is a Solana SPL mint address. Returns verdict GO/CAUTION/DANGER with checks for freeze authority, mint authority, transfer controls, holder concentration and liquidity. A GO means no red flags in the checks performed, NOT that the token is safe.",
+          "x-agent-guidance": {
+            whenToUse:
+              "Use as a go/no-go safety gate before an agent buys, swaps, or interacts with an unfamiliar Solana SPL token, especially new meme coins. The first due-diligence step in any Solana token workflow. Pair with /api/bundle to also check for coordinated launch buys.",
+            input: "POST JSON: { token } where token is the Solana mint address (base58).",
+            output:
+              "verdict (GO|CAUTION|DANGER), reasons[], checks[] (freeze authority, mint authority, Token-2022 controls, holder concentration, liquidity/LP), tokenInfo, notChecked[].",
+            paymentFlow:
+              "First call returns HTTP 402 with an x402 payment requirement (USDC on Solana or Base). Pay with an x402 client, then retry the same request to get 200.",
+          },
           "x-payment-info": {
             x402Version: 2,
             price: { mode: "fixed", amount: PRICE_USD, currency: "USD" },
@@ -54,6 +63,15 @@ export async function GET() {
           summary: "Solana bundle / sniper detection",
           description:
             "Body: { token } where token is a Solana SPL mint address. Analyzes recent swaps and groups buyers by slot to flag coordinated launch buys (bundle/sniper clusters). Returns bundleVerdict CLEAN/SUSPICIOUS/LIKELY_BUNDLE, distinct buyers, and the largest same-slot cluster. Most accurate for freshly launched tokens; for older tokens it reflects recent clustering, not the launch. A bundle signal is a risk flag, not proof of malice.",
+          "x-agent-guidance": {
+            whenToUse:
+              "Use to detect coordinated launch buying (bundles/snipers) on a Solana token, especially fresh pump.fun-style launches, before trading it. Complements /api/rugcheck (authorities) with launch-behavior analysis.",
+            input: "POST JSON: { token } where token is the Solana mint address (base58).",
+            output:
+              "bundleVerdict (CLEAN|SUSPICIOUS|LIKELY_BUNDLE), distinctBuyers, largestSlotCluster, clusters[], clusterBuyerShare, reasons[].",
+            paymentFlow:
+              "First call returns HTTP 402 with an x402 payment requirement (USDC on Solana or Base). Pay with an x402 client, then retry the same request to get 200.",
+          },
           "x-payment-info": {
             x402Version: 2,
             price: { mode: "fixed", amount: PRICE_USD, currency: "USD" },

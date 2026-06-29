@@ -42,10 +42,20 @@ export async function bundleCheck(mint: string): Promise<BundleResult> {
   if (!key) throw new Error("HELIUS_API_KEY not configured.");
 
   const LIMIT = 100;
-  const res = await fetch(heliusUrl(mint, key, LIMIT), {
-    headers: { "User-Agent": "base-sol-rugcheck/1.0" },
-    cache: "no-store",
-  });
+  const ctrl = new AbortController();
+  const tt = setTimeout(() => ctrl.abort(), 8000);
+  let res: Response;
+  try {
+    res = await fetch(heliusUrl(mint, key, LIMIT), {
+      headers: { "User-Agent": "base-sol-rugcheck/1.0" },
+      cache: "no-store",
+      signal: ctrl.signal,
+    });
+  } catch (e: any) {
+    throw new Error(e?.name === "AbortError" ? "Helius timeout after 8000ms" : "Helius fetch failed");
+  } finally {
+    clearTimeout(tt);
+  }
   if (!res.ok) throw new Error("Helius HTTP " + res.status);
   const txs = await res.json();
   if (!Array.isArray(txs)) throw new Error("Unexpected Helius response.");

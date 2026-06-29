@@ -24,7 +24,11 @@ export async function fetchMarket(mint: string): Promise<Market> {
   try {
     return await cached(key, 30000, async () => {
       const url = "https://api.dexscreener.com/latest/dex/tokens/" + addr;
-      const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
+      const ctrl = new AbortController();
+      const tt = setTimeout(() => ctrl.abort(), 6000);
+      let res: Response;
+      try { res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store", signal: ctrl.signal }); }
+      finally { clearTimeout(tt); }
       if (!res.ok) return { found: false };
       const data: any = await res.json();
       let pairs: any[] = Array.isArray(data?.pairs) ? data.pairs : [];
