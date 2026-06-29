@@ -13,7 +13,7 @@ export async function GET() {
       title: "sol-rugcheck - Solana token safety for AI agents",
       version: "1.0.0",
       description:
-        "Pre-trade intelligence for Solana SPL tokens: safety (freeze/mint authority, transfer hooks/fees, holder concentration) plus live market data (price, liquidity, 24h volume, age) in one call, returned with a GO/CAUTION/DANGER verdict (GoPlus + DexScreener). Pay-per-call in USDC via x402 on Solana or Base. No API key, no signup.",
+        "Pre-trade intelligence for Solana SPL tokens: safety (freeze/mint authority, Token-2022 powers: close authority, balance-mutable, default-frozen, mutable metadata, upgradable fee/hook; holder concentration; LP burn/lock) plus live market data (price, liquidity, 24h volume, age) in one call, returned with a GO/CAUTION/DANGER verdict (GoPlus + DexScreener). Pay-per-call in USDC via x402 on Solana or Base. No API key, no signup.",
       contact: { name: "sol-rugcheck", email: CONTACT_EMAIL, url: BASE_URL },
     },
     servers: [{ url: BASE_URL }],
