@@ -48,6 +48,31 @@ export async function GET() {
           },
         },
       },
+      "/api/bundle": {
+        post: {
+          operationId: "solBundleCheck",
+          summary: "Solana bundle / sniper detection",
+          description:
+            "Body: { token } where token is a Solana SPL mint address. Analyzes recent swaps and groups buyers by slot to flag coordinated launch buys (bundle/sniper clusters). Returns bundleVerdict CLEAN/SUSPICIOUS/LIKELY_BUNDLE, distinct buyers, and the largest same-slot cluster. Most accurate for freshly launched tokens; for older tokens it reflects recent clustering, not the launch. A bundle signal is a risk flag, not proof of malice.",
+          "x-payment-info": {
+            x402Version: 2,
+            price: { mode: "fixed", amount: PRICE_USD, currency: "USD" },
+            protocols: ["x402"],
+            networks: SOL_ENABLED ? [SOL_NETWORK, EVM_NETWORK] : [EVM_NETWORK],
+            asset: "USDC",
+            payTo: { solana: SOL_ENABLED ? SOL_PAY_TO : null, base: EVM_PAY_TO },
+          },
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { type: "object", properties: { token: { type: "string", description: "Solana SPL mint address." } }, required: ["token"] } } },
+          },
+          responses: {
+            "200": { description: "Bundle verdict and slot clusters." },
+            "400": { description: "Missing/invalid mint." },
+            "402": { description: "Payment Required (x402, USDC on Solana or Base)." },
+          },
+        },
+      },
     },
   };
   return new Response(JSON.stringify(spec, null, 2), { headers: { "content-type": "application/json" } });
