@@ -57,3 +57,10 @@ export async function POST(req: NextRequest, ctx: any) {
   }
   return (paid as any)(req, ctx);
 }
+
+
+// GET: de discovery crawler (x402scan) probe thay 402 payment challenge.
+// Agent that su goi bang POST.
+export async function GET(req: NextRequest, ctx: any) {
+  return (paid as any)(req, ctx);
+}
